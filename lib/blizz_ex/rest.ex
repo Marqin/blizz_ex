@@ -1,24 +1,24 @@
 defmodule BlizzEx.Rest do
 
   def get(path, opts) do
-    url = Application.get_env(:blizz_ex, :url) <> path
-    opts = setopts(opts)
-    parse(HTTPoison.get(url, [], [params: opts]))
+    Application.get_env(:blizz_ex, :url) <> path
+    |> HTTPoison.get([], [params: setopts(opts)])
+    |> parse()
   end
 
   defp setopts(opts) do
-    opts = Map.put(opts, :locale, Application.get_env(:blizz_ex, :locale))
-    opts = Map.put(opts, :apikey, Application.get_env(:blizz_ex, :apikey))
+    Map.put(opts, :locale, Application.get_env(:blizz_ex, :locale))
+    |> Map.put(:apikey, Application.get_env(:blizz_ex, :apikey))
   end
 
-  defp parse(httpoison_return) do
-    case httpoison_return do
+  defp parse(api_response) do
+    case api_response do
       {:ok, response } ->
         case Poison.decode(response.body) do
           {:ok, data} -> {:ok, data}
-          {:error, _} -> {:error, :poison}
+          {:error, message} -> {:error, {:poison, message}}
         end
-      {:error, _} -> {:error, :httpoison}
+      {:error, message} -> {:error, {:httpoison, message}}
     end
   end
 end
